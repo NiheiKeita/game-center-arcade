@@ -19,11 +19,9 @@ export default function MachineShow() {
               <h1 className="text-3xl font-bold text-gray-900">{machine.name}</h1>
               <p className="mt-2 text-gray-600">筐体詳細情報</p>
             </div>
-            <div className="flex space-x-4">
-              <Link href="/admin/machines" className="text-blue-600 hover:text-blue-800">
-                ← 筐体一覧に戻る
-              </Link>
-            </div>
+            <Link href="/admin/machines" className="text-blue-600 hover:text-blue-800">
+              ← 筐体一覧に戻る
+            </Link>
           </div>
         </div>
 
