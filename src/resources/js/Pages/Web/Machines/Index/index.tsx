@@ -101,7 +101,7 @@ export default function MachinesIndex() {
                 href="/machines" 
                 className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
               >
-                すべての筐体を表示
+                検索条件クリア
               </Link>
             </div>
           )}
