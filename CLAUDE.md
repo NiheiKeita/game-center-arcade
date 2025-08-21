@@ -85,7 +85,7 @@ docker compose exec app composer phpcs .
 ## 本番環境での設定
 1. .envファイルで以下を設定：
 ```
-APP_URL=https://your-domain.com
+APP_URL=https://gamedx.qboad.com
 FILESYSTEM_DISK=public
 ```
 
@@ -95,8 +95,26 @@ php artisan storage:link
 ```
 
 3. storage/app/publicディレクトリの書き込み権限確認
+```
+chmod -R 755 storage/
+chmod -R 755 bootstrap/cache/
+```
 
 4. Webサーバー（Apache/Nginx）で/storageパスが正しくアクセスできることを確認
+
+5. 設定キャッシュのクリア（重要）：
+```
+php artisan config:cache
+php artisan config:clear
+```
+
+## トラブルシューティング：画像URL問題
+- MachineImageモデルで `Storage::disk('public')->url()` を使用
+- APP_URLが正しく設定されているか確認
+- シンボリックリンクが正しく作成されているか確認：
+  ```
+  ls -la public/storage
+  ```
 
 # 修正が終わったらやること
 以下を実行してエラーがないことを確認してください
