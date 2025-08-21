@@ -1,4 +1,5 @@
 import { usePage } from '@inertiajs/react'
+import axios from 'axios'
 
 interface Category {
   id: number;
@@ -34,21 +35,8 @@ interface Machine {
   updated_at: string;
 }
 
-interface PaginatedMachines {
-  data: Machine[];
-  current_page: number;
-  last_page: number;
-  per_page: number;
-  total: number;
-  links: Array<{
-    url: string | null;
-    label: string;
-    active: boolean;
-  }>;
-}
-
-export interface IndexProps {
-  machines: PaginatedMachines;
+export interface AdminIndexProps {
+  machines: Machine[];
   categories: Category[];
   series: Series[];
   selectedCategoryId?: number;
@@ -56,15 +44,15 @@ export interface IndexProps {
   [key: string]: any;
 }
 
-export function useMachinesIndex() {
-  const { machines, categories, series, selectedCategoryId, selectedSeriesId } = usePage<IndexProps>().props
+export function useAdminMachinesIndex() {
+  const { machines, categories, series, selectedCategoryId, selectedSeriesId } = usePage<AdminIndexProps>().props
 
   const handleCategoryChange = (categoryId: string) => {
     const params = new URLSearchParams()
     if (categoryId) params.set('category_id', categoryId)
-    // カテゴリー変更時はシリーズ選択をリセット（selectedSeriesIdは含めない）
+    // カテゴリー変更時はシリーズ選択をリセット
     
-    const url = params.toString() ? `/machines?${params.toString()}` : '/machines'
+    const url = params.toString() ? `/admin/machines?${params.toString()}` : '/admin/machines'
     window.location.href = url
   }
 
@@ -74,7 +62,7 @@ export function useMachinesIndex() {
       const params = new URLSearchParams()
       if (selectedCategoryId) params.set('category_id', selectedCategoryId.toString())
       
-      const url = params.toString() ? `/machines?${params.toString()}` : '/machines'
+      const url = params.toString() ? `/admin/machines?${params.toString()}` : '/admin/machines'
       window.location.href = url
       return
     }
@@ -90,7 +78,7 @@ export function useMachinesIndex() {
       }
       params.set('series_id', seriesId)
       
-      const url = `/machines?${params.toString()}`
+      const url = `/admin/machines?${params.toString()}`
       window.location.href = url
     } catch (error) {
       console.error('シリーズ情報の取得に失敗しました:', error)
@@ -99,7 +87,7 @@ export function useMachinesIndex() {
       if (selectedCategoryId) params.set('category_id', selectedCategoryId.toString())
       if (seriesId) params.set('series_id', seriesId)
       
-      const url = params.toString() ? `/machines?${params.toString()}` : '/machines'
+      const url = params.toString() ? `/admin/machines?${params.toString()}` : '/admin/machines'
       window.location.href = url
     }
   }

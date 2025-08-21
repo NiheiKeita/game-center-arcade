@@ -14,6 +14,8 @@ export default function MachineCreate() {
     processing,
     errors,
     handleImageChange,
+    handleCategoryChange,
+    handleSeriesChange,
     updateCaption,
     removeImage,
     submit
@@ -45,7 +47,7 @@ export default function MachineCreate() {
                 </label>
                 <select
                   value={data.category_id}
-                  onChange={(e) => setData('category_id', e.target.value)}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   required
                 >
@@ -67,7 +69,7 @@ export default function MachineCreate() {
                 </label>
                 <select
                   value={data.series_id}
-                  onChange={(e) => setData('series_id', e.target.value)}
+                  onChange={(e) => handleSeriesChange(e.target.value)}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   required
                 >

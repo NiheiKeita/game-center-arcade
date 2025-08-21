@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useForm, usePage } from '@inertiajs/react'
+import axios from 'axios'
 
 interface Category {
   id: number;
@@ -113,6 +114,41 @@ export function useMachineEdit() {
     setData('remove_images', newRemovedIds)
   }
 
+  const handleCategoryChange = (categoryId: string) => {
+    setData((prevData) => ({
+      ...prevData,
+      category_id: categoryId,
+      series_id: '' // カテゴリー変更時はシリーズを「すべて」にリセット
+    }))
+  }
+
+  const handleSeriesChange = async (seriesId: string) => {
+    if (!seriesId) {
+      setData('series_id', '')
+      return
+    }
+    
+    try {
+      // シリーズ情報を取得してカテゴリーを自動選択
+      const response = await axios.get(`/api/series/${seriesId}`)
+      const seriesData = response.data
+      
+      if (seriesData?.category_id) {
+        // 一度にsetDataを呼び出してカテゴリーとシリーズを設定
+        setData((prevData) => ({
+          ...prevData,
+          category_id: seriesData.category_id.toString(),
+          series_id: seriesId
+        }))
+      } else {
+        setData('series_id', seriesId)
+      }
+    } catch (error) {
+      console.error('シリーズ情報の取得に失敗しました:', error)
+      setData('series_id', seriesId)
+    }
+  }
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
     post(`/admin/machines/${machine.id}`, {
@@ -132,6 +168,8 @@ export function useMachineEdit() {
     processing,
     errors,
     handleImageChange,
+    handleCategoryChange,
+    handleSeriesChange,
     updateCaption,
     removeNewImage,
     removeExistingImage,

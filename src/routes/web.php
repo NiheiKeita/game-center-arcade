@@ -67,4 +67,10 @@ Route::group(['middleware' => 'basicauth'], function () {
     // API
     Route::post('/api/upload', [ImageController::class, 'upload'])->withoutMiddleware(VerifyCsrfToken::class)->name('upload');
     Route::post('/api/upload/ma', [ImageController::class, 'maUpload'])->withoutMiddleware(VerifyCsrfToken::class)->name('upload.ma');
+    Route::get('/api/series/by-category/{categoryId}', function ($categoryId) {
+        return \App\Models\Series::where('category_id', $categoryId)->get();
+    })->name('api.series.by-category');
+    Route::get('/api/series/{seriesId}', function ($seriesId) {
+        return \App\Models\Series::with('category')->find($seriesId);
+    })->name('api.series.show');
 });

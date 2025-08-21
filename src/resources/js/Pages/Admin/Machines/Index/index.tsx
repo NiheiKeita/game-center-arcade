@@ -1,71 +1,19 @@
 import React from 'react'
-import { Head, Link, usePage } from '@inertiajs/react'
+import { Head, Link } from '@inertiajs/react'
 import AdminLayout from '@/Layouts/AdminLayout'
 import { Button } from '@/Components/Button'
-
-interface Category {
-  id: number;
-  name: string;
-}
-
-interface Series {
-  id: number;
-  name: string;
-}
-
-interface Creator {
-  id: number;
-  name: string;
-}
-
-interface MachineImage {
-  id: number;
-  image_url: string;
-  caption: string | null;
-}
-
-interface Machine {
-  id: number;
-  name: string;
-  version: string;
-  description: string | null;
-  category: Category;
-  series: Series;
-  creator: Creator;
-  images: MachineImage[];
-  created_at: string;
-  updated_at: string;
-}
-
-interface Props {
-  machines: Machine[];
-  categories: Category[];
-  series: Series[];
-  selectedCategoryId?: number;
-  selectedSeriesId?: number;
-  [key: string]: any;
-}
+import { useAdminMachinesIndex } from './hooks'
 
 export default function MachinesIndex() {
-  const { machines, categories, series, selectedCategoryId, selectedSeriesId } = usePage<Props>().props
-
-  const handleCategoryChange = (categoryId: string) => {
-    const params = new URLSearchParams()
-    if (categoryId) params.set('category_id', categoryId)
-    if (selectedSeriesId) params.set('series_id', selectedSeriesId.toString())
-    
-    const url = params.toString() ? `/admin/machines?${params.toString()}` : '/admin/machines'
-    window.location.href = url
-  }
-
-  const handleSeriesChange = (seriesId: string) => {
-    const params = new URLSearchParams()
-    if (selectedCategoryId) params.set('category_id', selectedCategoryId.toString())
-    if (seriesId) params.set('series_id', seriesId)
-    
-    const url = params.toString() ? `/admin/machines?${params.toString()}` : '/admin/machines'
-    window.location.href = url
-  }
+  const {
+    machines,
+    categories,
+    series,
+    selectedCategoryId,
+    selectedSeriesId,
+    handleCategoryChange,
+    handleSeriesChange
+  } = useAdminMachinesIndex()
 
   return (
     <AdminLayout>

@@ -29,7 +29,13 @@ class MachineController extends Controller
 
         $machines = $query->get();
         $categories = Category::all();
-        $series = Series::all();
+        
+        // カテゴリーが選択されている場合は、そのカテゴリーのシリーズのみを取得
+        if ($request->has('category_id') && $request->category_id) {
+            $series = Series::where('category_id', $request->category_id)->get();
+        } else {
+            $series = Series::all();
+        }
 
         return Inertia::render('Admin/Machines/Index', [
             'machines' => $machines,
