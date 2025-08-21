@@ -46,7 +46,7 @@ Route::group(['middleware' => 'basicauth'], function () {
     //管理画面側
     Route::get('admin/login', [AdminLoginController::class, 'index'])->name('admin.login');
     Route::post('admin/login', [AdminLoginController::class, 'store'])->name('admin.login');
-    Route::middleware('guest.admin')->group(function () {
+    Route::middleware('auth:admin')->group(function () {
         Route::get('admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard.index');
 
         Route::get('admin/admin_users', [AdminUserController::class, 'index'])->name('admin_user.list');

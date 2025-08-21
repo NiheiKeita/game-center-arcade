@@ -65,7 +65,7 @@ class MachineController extends Controller
             'captions.*' => 'nullable|string|max:255',
         ]);
 
-        $validated['created_by'] = Auth::id();
+        $validated['created_by'] = Auth::guard('admin')->id();
 
         $machine = Machine::create($validated);
 

@@ -29,7 +29,7 @@ class Machine extends Model
 
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(AdminUser::class, 'created_by');
     }
 
     public function images(): HasMany
