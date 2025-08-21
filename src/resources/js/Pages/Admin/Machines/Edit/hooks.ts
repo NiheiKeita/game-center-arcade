@@ -53,7 +53,7 @@ export function useMachineEdit() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [removedImageIds, setRemovedImageIds] = useState<number[]>([])
 
-  const { data, setData, post, processing, errors } = useForm<FormData>({
+  const { data, setData, processing, errors } = useForm<FormData>({
     category_id: machine.category_id.toString(),
     series_id: machine.series_id.toString(),
     name: machine.name,
@@ -64,21 +64,70 @@ export function useMachineEdit() {
     remove_images: []
   })
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 画像をリサイズする関数
+  const resizeImage = (file: File, maxWidth: number = 800, maxHeight: number = 600, quality: number = 0.8): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = new Image()
+
+      img.onload = () => {
+        // アスペクト比を維持しながらリサイズ
+        let { width, height } = img
+        
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height)
+          width = Math.floor(width * ratio)
+          height = Math.floor(height * ratio)
+        }
+
+        canvas.width = width
+        canvas.height = height
+
+        // 画像を描画
+        ctx?.drawImage(img, 0, 0, width, height)
+
+        // Blobに変換
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const resizedFile = new File([blob], file.name, {
+              type: file.type,
+              lastModified: Date.now()
+            })
+            console.log(`画像をリサイズしました: ${Math.round(file.size / 1024)}KB → ${Math.round(resizedFile.size / 1024)}KB`)
+            resolve(resizedFile)
+          } else {
+            resolve(file)
+          }
+        }, file.type, quality)
+      }
+
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files) return
 
     const fileArray = Array.from(files)
-    setImageFiles(fileArray)
+    console.log('Original files:', fileArray.map(f => ({ name: f.name, size: Math.round(f.size / 1024) + 'KB' })))
 
-    const previews = fileArray.map(file => URL.createObjectURL(file))
+    // 画像をリサイズ
+    const resizedFiles = await Promise.all(
+      fileArray.map(file => resizeImage(file, 800, 600, 0.8))
+    )
+
+    setImageFiles(resizedFiles)
+    console.log('Resized files:', resizedFiles.map(f => ({ name: f.name, size: Math.round(f.size / 1024) + 'KB' })))
+
+    const previews = resizedFiles.map(file => URL.createObjectURL(file))
     setImagePreviews(prev => {
       prev.forEach(url => URL.revokeObjectURL(url))
       return previews
     })
 
-    setData('images', files)
-    setData('captions', fileArray.map(() => ''))
+    setData('captions', resizedFiles.map(() => ''))
   }
 
   const updateCaption = (index: number, caption: string) => {
@@ -152,9 +201,57 @@ export function useMachineEdit() {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
-    post(`/admin/machines/${machine.id}`, {
-      forceFormData: true,
-    })
+    
+    // FormDataを直接作成して送信
+    const formData = new FormData()
+    
+    // テキストフィールドを追加
+    formData.append('category_id', data.category_id)
+    formData.append('series_id', data.series_id)
+    formData.append('name', data.name)
+    formData.append('version', data.version)
+    formData.append('description', data.description)
+    formData.append('_method', 'PUT') // Laravel用のメソッドオーバーライド
+    
+    // 画像ファイルを追加
+    if (imageFiles.length > 0) {
+      imageFiles.forEach((file, index) => {
+        formData.append('images[]', file)
+        formData.append(`captions[${index}]`, data.captions[index] || '')
+      })
+    }
+    
+    // 削除対象の画像IDを追加
+    if (removedImageIds.length > 0) {
+      removedImageIds.forEach(id => {
+        formData.append('remove_images[]', id.toString())
+      })
+    }
+
+    // Axiosで送信
+    const submitFormData = async () => {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+      
+      try {
+        await axios.post(`/admin/machines/${machine.id}`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'X-CSRF-TOKEN': csrfToken
+          }
+        })
+        console.log('Form submission successful')
+        // 成功時は一覧ページにリダイレクト
+        window.location.href = '/admin/machines'
+      } catch (error: any) {
+        console.log('Form submission errors:', error)
+        if (error.response) {
+          console.log('Error response:', error.response.data)
+          console.log('Error status:', error.response.status)
+        }
+      }
+    }
+
+    submitFormData()
   }
 
   return {
