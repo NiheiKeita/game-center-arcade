@@ -36,6 +36,45 @@ default エクスポートの Story にはテストを書かない（カタロ�
 UI 部品にはロジックを入れず、表示のみに専念
 ロジックのテストは hooks.test.ts に分離
 
+# Docker環境での操作
+このプロジェクトはDocker環境で動作します。以下のコマンドを使用してください：
+
+## マイグレーション
+```
+docker compose exec app php artisan migrate
+```
+
+## マイグレーション状況確認
+```
+docker compose exec app php artisan migrate:status
+```
+
+## コード品質チェック
+```
+docker compose exec app composer phpcs .
+```
+
+# 実装履歴・注意事項
+
+## マイグレーションファイルの実行順序
+- マイグレーションファイル作成時、依存関係のあるテーブルは実行順序に注意
+- `machine_images`は`machines`テーブルに依存するため、後から実行される必要がある
+- 同じタイムスタンプのマイグレーションファイルがあると実行順序が不定になる問題を解決済み
+
+## ページコンポーネントの構造変更履歴
+### 2025-08-21: Web/Topページの構造修正
+- `Top.tsx` → `Top/index.tsx` + `Top/index.stories.tsx` に変更
+- コーディングルールに準拠
+
+### 2025-08-21: Web/Machinesページの構造修正
+- `Machines/Index.tsx` → `Machines/Index/index.tsx` + `hooks.ts` + `index.stories.tsx`
+- `Machines/Show.tsx` → `Machines/Show/index.tsx` + `hooks.ts` + `index.stories.tsx`
+- ロジックをhooks.tsに分離してコンポーネントから表示ロジックを除去
+
+## Inertia.jsレンダリング
+- LaravelコントローラーからのInertiaレンダリング形式: `Inertia::render('Web/Top')`
+- ディレクトリ構造: `/resources/js/Pages/Web/Top/index.tsx`
+
 # 修正が終わったらやること
 以下を実行してエラーがないことを確認してください
 ```

@@ -4,10 +4,15 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminLoginController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\SeriesController;
+use App\Http\Controllers\Admin\MachineController;
 use App\Http\Controllers\Admin\ImageController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Web\LoginController;
+use App\Http\Controllers\Web\MachineController as WebMachineController;
 use App\Http\Controllers\Web\PasswordController;
+use App\Http\Controllers\Web\TopController;
 use App\Http\Middleware\VerifyCsrfToken;
 
 /*
@@ -22,6 +27,7 @@ use App\Http\Middleware\VerifyCsrfToken;
 */
 
 Route::group(['middleware' => 'basicauth'], function () {
+    Route::get('/', [TopController::class, 'index'])->name('web.top');
     Route::fallback(function () {
         return redirect(route('web.top'));
     });
@@ -32,6 +38,9 @@ Route::group(['middleware' => 'basicauth'], function () {
     });
     Route::get('login', [LoginController::class, 'create'])->name('user.login');
     Route::post('login', [LoginController::class, 'store']);
+
+    Route::get('machines', [WebMachineController::class, 'index'])->name('web.machines.index');
+    Route::get('machines/{machine}', [WebMachineController::class, 'show'])->name('web.machines.show');
 
 
     //管理画面側
@@ -49,6 +58,10 @@ Route::group(['middleware' => 'basicauth'], function () {
         Route::post('admin/users/add', [UserController::class, 'store'])->name('user.store');
         Route::get('admin/users/{id}', [UserController::class, 'edit'])->name('user.edit');
         Route::post('admin/users/{id}', [UserController::class, 'update'])->name('user.update');
+
+        Route::resource('admin/categories', CategoryController::class)->names('admin.categories');
+        Route::resource('admin/series', SeriesController::class)->names('admin.series');
+        Route::resource('admin/machines', MachineController::class)->names('admin.machines');
     });
 
     // API
