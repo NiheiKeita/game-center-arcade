@@ -150,7 +150,7 @@ export default function MachineEdit() {
                       className={`relative ${removedImageIds.includes(image.id) ? 'opacity-50' : ''}`}
                     >
                       <img
-                        src={`/storage/${image.image_url}`}
+                        src={image.full_image_url}
                         alt={image.caption || '筐体画像'}
                         className="h-32 w-full rounded-lg object-cover"
                       />

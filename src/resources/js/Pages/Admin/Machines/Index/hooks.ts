@@ -19,6 +19,7 @@ interface Creator {
 interface MachineImage {
   id: number;
   image_url: string;
+  full_image_url: string;
   caption: string | null;
 }
 

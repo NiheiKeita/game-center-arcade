@@ -13,8 +13,18 @@ class MachineImage extends Model
         'caption',
     ];
 
+    protected $appends = ['full_image_url'];
+
     public function machine(): BelongsTo
     {
         return $this->belongsTo(Machine::class);
+    }
+
+    public function getFullImageUrlAttribute(): string
+    {
+        if ($this->image_url) {
+            return asset('storage/' . $this->image_url);
+        }
+        return '';
     }
 }

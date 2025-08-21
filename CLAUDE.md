@@ -75,6 +75,29 @@ docker compose exec app composer phpcs .
 - LaravelコントローラーからのInertiaレンダリング形式: `Inertia::render('Web/Top')`
 - ディレクトリ構造: `/resources/js/Pages/Web/Top/index.tsx`
 
+# 画像アップロード設定
+
+## ローカル環境
+1. FILESYSTEM_DISK=public に設定
+2. storage linkを作成: `php artisan storage:link`
+3. 相対パスのsymlink作成: `ln -s ../storage/app/public public/storage`
+
+## 本番環境での設定
+1. .envファイルで以下を設定：
+```
+APP_URL=https://your-domain.com
+FILESYSTEM_DISK=public
+```
+
+2. ストレージリンク作成：
+```
+php artisan storage:link
+```
+
+3. storage/app/publicディレクトリの書き込み権限確認
+
+4. Webサーバー（Apache/Nginx）で/storageパスが正しくアクセスできることを確認
+
 # 修正が終わったらやること
 以下を実行してエラーがないことを確認してください
 ```

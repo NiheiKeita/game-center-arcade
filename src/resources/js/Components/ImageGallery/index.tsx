@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 interface Image {
   id: number;
   image_url: string;
+  full_image_url: string;
   caption: string | null;
 }
 
@@ -33,7 +34,7 @@ export function ImageGallery({ images, className = '' }: Props) {
           >
             <div className="aspect-w-4 aspect-h-3 overflow-hidden rounded-lg">
               <img
-                src={`/storage/${image.image_url}`}
+                src={image.full_image_url}
                 alt={image.caption || ''}
                 className="h-48 w-full object-cover transition-transform duration-200 group-hover:scale-105"
               />
@@ -53,7 +54,7 @@ export function ImageGallery({ images, className = '' }: Props) {
         >
           <div className="max-h-full max-w-4xl p-4">
             <img
-              src={`/storage/${selectedImage.image_url}`}
+              src={selectedImage.full_image_url}
               alt={selectedImage.caption || ''}
               className="max-h-full max-w-full object-contain"
             />

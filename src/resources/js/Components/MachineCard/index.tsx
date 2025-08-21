@@ -4,6 +4,7 @@ import { Link } from '@inertiajs/react'
 interface MachineImage {
   id: number;
   image_url: string;
+  full_image_url: string;
   caption: string | null;
 }
 
@@ -47,7 +48,7 @@ export function MachineCard({ machine, showActions = true, className = '' }: Pro
       <div className="aspect-w-16 aspect-h-9">
         {mainImage ? (
           <img
-            src={`/storage/${mainImage.image_url}`}
+            src={mainImage.full_image_url}
             alt={machine.name}
             className="h-48 w-full object-cover"
           />

@@ -74,17 +74,29 @@ class MachineController extends Controller
         $validated['created_by'] = Auth::guard('admin')->id();
 
         $machine = Machine::create($validated);
+        
+        \Log::info('Machine created with ID: ' . $machine->id);
+        \Log::info('Request has images: ' . ($request->hasFile('images') ? 'YES' : 'NO'));
+        \Log::info('Request files: ' . json_encode($request->allFiles()));
+        \Log::info('Request data: ' . json_encode($request->except(['images'])));
 
         if ($request->hasFile('images')) {
+            \Log::info('Found ' . count($request->file('images')) . ' images to upload');
+            
             foreach ($request->file('images') as $index => $image) {
                 $path = $image->store('images', 'public');
+                \Log::info('Image stored at path: ' . $path);
                 
-                MachineImage::create([
+                $imageRecord = MachineImage::create([
                     'machine_id' => $machine->id,
                     'image_url' => $path,
                     'caption' => $request->captions[$index] ?? null,
                 ]);
+                
+                \Log::info('MachineImage created with ID: ' . $imageRecord->id);
             }
+        } else {
+            \Log::info('No images found in request');
         }
 
         return redirect()->route('admin.machines.index')

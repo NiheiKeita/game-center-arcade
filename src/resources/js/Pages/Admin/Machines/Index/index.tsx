@@ -67,7 +67,7 @@ export default function MachinesIndex() {
                     <div className="aspect-w-16 aspect-h-9 mb-4">
                       {machine.images.length > 0 ? (
                         <img
-                          src={`/storage/${machine.images[0].image_url}`}
+                          src={machine.images[0].full_image_url}
                           alt={machine.name}
                           className="h-48 w-full rounded object-cover"
                         />
