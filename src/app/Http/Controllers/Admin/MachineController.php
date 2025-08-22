@@ -89,7 +89,7 @@ class MachineController extends Controller
         \Log::info('=== MACHINE CREATION DEBUG ===');
         \Log::info('Request temp_image_ids: ' . json_encode($tempImageIds));
         \Log::info('Request all inputs: ' . json_encode($request->all()));
-        
+
         if (is_array($tempImageIds) && !empty($tempImageIds)) {
             \Log::info('Processing temp images: ' . json_encode($tempImageIds));
 
