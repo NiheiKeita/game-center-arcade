@@ -11,10 +11,8 @@ const withInertia = (Story: any, context: any) => {
     // storyのparametersからinertiaの設定を取得
     const inertiaProps = context.parameters?.inertia?.props || {}
     
-    // InertiaプロパティをGlobalに設定
-    React.useEffect(() => {
-        setInertiaProps(inertiaProps)
-    }, [inertiaProps])
+    // InertiaプロパティをGlobalに設定（useEffectを使わずに即座に設定）
+    setInertiaProps(inertiaProps)
     
     return <Story />
 }
