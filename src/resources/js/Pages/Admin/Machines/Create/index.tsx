@@ -142,7 +142,7 @@ export default function MachineCreate() {
                 画像
               </label>
               
-              <div className="mt-2 mb-3">
+              <div className="mb-3 mt-2">
                 <label className="inline-flex items-center">
                   <input
                     type="checkbox"

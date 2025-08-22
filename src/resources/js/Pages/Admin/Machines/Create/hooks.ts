@@ -39,7 +39,7 @@ export function useMachineCreate() {
     const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
     const [uploading, setUploading] = useState(false)
     const [availableSeries, setAvailableSeries] = useState<Series[]>(initialSeries)
-    
+
     // リサイズ機能の有効/無効を制御する変数
     const [enableResize, setEnableResize] = useState(true)
 
@@ -74,7 +74,8 @@ export function useMachineCreate() {
     const resizeImage = (file: File): Promise<File> => {
         console.log('Starting to resize image:', file.name, file.type, `${Math.round(file.size / 1024)}KB`)
         console.log('Resize enabled:', enableResize)
-        
+
+        // eslint-disable-next-line no-async-promise-executor
         return new Promise(async (resolve) => {
             // リサイズが無効の場合は元ファイルをそのまま返す
             if (!enableResize) {
@@ -82,7 +83,7 @@ export function useMachineCreate() {
                 resolve(file)
                 return
             }
-            
+
             // HEICファイルの場合は変換をスキップ
             if (file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().includes('.heic')) {
                 console.warn('HEIC format detected, skipping resize')
@@ -98,7 +99,7 @@ export function useMachineCreate() {
 
                 const canvas = document.createElement('canvas')
                 const ctx = canvas.getContext('2d')
-                
+
                 if (!ctx) {
                     console.error('Canvas context not available')
                     imageBitmap.close()
@@ -108,7 +109,7 @@ export function useMachineCreate() {
 
                 // 目標サイズを1MBに設定（品質重視）
                 const targetSize = 1024 * 1024 // 1MB
-                
+
                 // 品質重視のリサイズ設定
                 const resizeConfigs = [
                     { maxSize: 800, quality: 0.8 },
@@ -119,12 +120,12 @@ export function useMachineCreate() {
                     { maxSize: 250, quality: 0.55 },
                     { maxSize: 200, quality: 0.5 },
                 ]
-                
+
                 for (const config of resizeConfigs) {
                     // アスペクト比を維持しながら最大サイズに収める
                     const aspectRatio = imageBitmap.width / imageBitmap.height
                     let newWidth, newHeight
-                    
+
                     if (imageBitmap.width > imageBitmap.height) {
                         // 横長
                         newWidth = config.maxSize
@@ -147,7 +148,7 @@ export function useMachineCreate() {
                     // 背景を白に設定
                     ctx.fillStyle = 'white'
                     ctx.fillRect(0, 0, newWidth, newHeight)
-                    
+
                     // ImageBitmapを描画
                     ctx.drawImage(imageBitmap, 0, 0, newWidth, newHeight)
 
@@ -157,16 +158,16 @@ export function useMachineCreate() {
                     })
 
                     if (blob) {
-                        const resizedFile = new File([blob], 
+                        const resizedFile = new File([blob],
                             file.name.replace(/\.[^/.]+$/, '.jpg'),
                             {
                                 type: 'image/jpeg',
                                 lastModified: Date.now()
                             }
                         )
-                        
+
                         console.log(`リサイズ試行: ${newWidth}x${newHeight}, 品質${config.quality} → ${Math.round(resizedFile.size / 1024)}KB`)
-                        
+
                         if (resizedFile.size <= targetSize) {
                             console.log(`✅ 画像リサイズ成功: ${Math.round(file.size / 1024)}KB → ${Math.round(resizedFile.size / 1024)}KB`)
                             imageBitmap.close()
@@ -175,20 +176,20 @@ export function useMachineCreate() {
                         }
                     }
                 }
-                
+
                 // 最終手段: より大きなサイズで品質を保持
                 canvas.width = 150
                 canvas.height = 150
                 ctx.fillStyle = 'white'
                 ctx.fillRect(0, 0, 150, 150)
                 ctx.drawImage(imageBitmap, 0, 0, 150, 150)
-                
+
                 const finalBlob = await new Promise<Blob | null>((blobResolve) => {
                     canvas.toBlob(blobResolve, 'image/jpeg', 0.4)
                 })
-                
+
                 if (finalBlob) {
-                    const finalFile = new File([finalBlob], 
+                    const finalFile = new File([finalBlob],
                         file.name.replace(/\.[^/.]+$/, '.jpg'),
                         {
                             type: 'image/jpeg',
@@ -203,7 +204,7 @@ export function useMachineCreate() {
                     imageBitmap.close()
                     resolve(file)
                 }
-                
+
             } catch (error) {
                 console.error('ImageBitmap creation failed:', error)
                 resolve(file)
@@ -225,18 +226,18 @@ export function useMachineCreate() {
             // 各ファイルを個別にアップロード
             for (const file of fileArray) {
                 console.log('Uploading file:', file.name)
-                
+
                 // ファイルをリサイズ（段階的に1MB以下まで）
                 const resizedFile = await resizeImage(file)
                 console.log('File resized successfully:', resizedFile.name, `${Math.round(resizedFile.size / 1024)}KB`)
-                
+
                 // リサイズが失敗している場合（元ファイルと同じサイズ）は処理を停止
                 if (resizedFile.size === file.size && file.size > 1024 * 1024) {
                     console.error('Resize failed, file size unchanged:', Math.round(file.size / 1024) + 'KB')
                     alert(`画像のリサイズに失敗しました。ファイル: ${file.name} (${Math.round(file.size / 1024)}KB)`)
                     continue // 次のファイルに進む
                 }
-                
+
                 // 最終チェック: リサイズ後でも1MB以上の場合は警告
                 if (resizedFile.size > 1024 * 1024) {
                     console.warn('Resized file still large:', Math.round(resizedFile.size / 1024) + 'KB')
@@ -283,8 +284,8 @@ export function useMachineCreate() {
             // await axios.put(`/api/temp-images/${imageToUpdate.id}`, { caption })
 
             // ローカル状態を更新
-            setUploadedImages(prev => 
-                prev.map((img, i) => 
+            setUploadedImages(prev =>
+                prev.map((img, i) =>
                     i === index ? { ...img, caption } : img
                 )
             )
@@ -300,10 +301,10 @@ export function useMachineCreate() {
         try {
             // サーバー側から一時画像を削除
             await axios.delete(`/api/temp-images/${imageToRemove.id}`)
-            
+
             // ローカル状態から削除
             setUploadedImages(prev => prev.filter((_, i) => i !== index))
-            
+
             console.log('Image removed successfully:', imageToRemove.filename)
         } catch (error) {
             console.error('Error removing image:', error)
