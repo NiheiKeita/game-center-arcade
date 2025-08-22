@@ -23,6 +23,10 @@ class ImageController extends Controller
         $file = $request->file('image');
         $path = $file->store('temp-images', 'public');
 
+        if ($path === false) {
+            return response()->json(['error' => 'Failed to store file'], 500);
+        }
+
         $tempImage = TempImage::create([
             'filename' => basename($path),
             'original_name' => $file->getClientOriginalName(),

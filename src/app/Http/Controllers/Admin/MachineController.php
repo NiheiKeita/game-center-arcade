@@ -80,9 +80,10 @@ class MachineController extends Controller
             \Log::info('Processing temp images: ' . json_encode($request->temp_image_ids));
 
             foreach ($request->temp_image_ids as $tempImageId) {
+                /** @var \App\Models\TempImage|null $tempImage */
                 $tempImage = \App\Models\TempImage::find($tempImageId);
-                
-                if ($tempImage) {
+
+                if ($tempImage instanceof \App\Models\TempImage) {
                     try {
                         // ファイルを永続ディレクトリに移動
                         $newPath = $tempImage->moveToPermanent('images');
@@ -98,7 +99,6 @@ class MachineController extends Controller
 
                         // 一時画像レコードを削除
                         $tempImage->delete();
-
                     } catch (\Exception $e) {
                         \Log::error('Failed to process temp image: ' . $e->getMessage());
                     }

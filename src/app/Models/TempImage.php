@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
 
 class TempImage extends Model
 {
@@ -21,8 +21,11 @@ class TempImage extends Model
 
     /**
      * 期限切れの一時画像を削除するスコープ
+     *
+     * @param Builder<TempImage> $query
+     * @return Builder<TempImage>
      */
-    public function scopeExpired($query)
+    public function scopeExpired(Builder $query): Builder
     {
         return $query->where('expires_at', '<', now());
     }
