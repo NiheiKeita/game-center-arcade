@@ -139,6 +139,15 @@ npm run lint
 npm run type-check
 ```
 
+## Storybook
+```bash
+# Storybookローカル実行
+npm run storybook
+
+# Storybookテスト
+npm run test-storybook
+```
+
 ## バックエンド
 ```bash
 # PHPコードスタイルチェック
@@ -163,3 +172,17 @@ docker compose exec app composer phpcs-fix
 # ESLint自動修正
 npm run lint -- --fix
 ```
+
+## CI/CD環境での設定
+GitHub ActionsでStorybookテストを実行する場合は、以下の環境変数を設定してください：
+
+```yaml
+env:
+  CI: true
+  LARAVEL_BYPASS_ENV_CHECK: 1
+```
+
+この設定により以下が解決されます：
+- Vite HMRサーバーのCI環境エラー
+- Laravel Vite pluginのCIチェック回避
+- Inertia.jsコンポーネントのStorybookテスト対応

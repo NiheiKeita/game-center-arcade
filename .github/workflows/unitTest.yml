@@ -39,10 +39,16 @@ jobs:
         run: npm run type-check
       - name: Build Storybook 
         run: npm run build-storybook
+        env:
+          CI: true
+          LARAVEL_BYPASS_ENV_CHECK: 1
       - name: Serve Storybook
         run: npx serve storybook-static -l 6006 &
       - name: Install Playwright with dependencies
         run: npx playwright install --with-deps
       - name: storybookTest
         run: npm run test-storybook
+        env:
+          CI: true
+          LARAVEL_BYPASS_ENV_CHECK: 1
 
