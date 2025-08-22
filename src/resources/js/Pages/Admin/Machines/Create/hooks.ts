@@ -39,6 +39,9 @@ export function useMachineCreate() {
     const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
     const [uploading, setUploading] = useState(false)
     const [availableSeries, setAvailableSeries] = useState<Series[]>(initialSeries)
+    
+    // リサイズ機能の有効/無効を制御する変数
+    const [enableResize, setEnableResize] = useState(true)
 
     const { data, setData, post, processing, errors } = useForm<FormData>({
         category_id: '',
@@ -70,8 +73,16 @@ export function useMachineCreate() {
     // ImageBitmapを使用した確実なリサイズ関数
     const resizeImage = (file: File): Promise<File> => {
         console.log('Starting to resize image:', file.name, file.type, `${Math.round(file.size / 1024)}KB`)
+        console.log('Resize enabled:', enableResize)
         
         return new Promise(async (resolve) => {
+            // リサイズが無効の場合は元ファイルをそのまま返す
+            if (!enableResize) {
+                console.log('Resize disabled, using original file')
+                resolve(file)
+                return
+            }
+            
             // HEICファイルの場合は変換をスキップ
             if (file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().includes('.heic')) {
                 console.warn('HEIC format detected, skipping resize')
@@ -95,18 +106,18 @@ export function useMachineCreate() {
                     return
                 }
 
-                // 目標サイズを150KBに設定（さらに小さく）
-                const targetSize = 150 * 1024 // 150KB
+                // 目標サイズを1MBに設定（品質重視）
+                const targetSize = 1024 * 1024 // 1MB
                 
-                // 非常に積極的なリサイズ設定
+                // 品質重視のリサイズ設定
                 const resizeConfigs = [
-                    { maxSize: 120, quality: 0.3 },
-                    { maxSize: 100, quality: 0.25 },
-                    { maxSize: 80, quality: 0.2 },
-                    { maxSize: 60, quality: 0.15 },
-                    { maxSize: 50, quality: 0.1 },
-                    { maxSize: 40, quality: 0.08 },
-                    { maxSize: 30, quality: 0.05 },
+                    { maxSize: 800, quality: 0.8 },
+                    { maxSize: 600, quality: 0.75 },
+                    { maxSize: 500, quality: 0.7 },
+                    { maxSize: 400, quality: 0.65 },
+                    { maxSize: 300, quality: 0.6 },
+                    { maxSize: 250, quality: 0.55 },
+                    { maxSize: 200, quality: 0.5 },
                 ]
                 
                 for (const config of resizeConfigs) {
@@ -124,10 +135,10 @@ export function useMachineCreate() {
                         newWidth = Math.round(newHeight * aspectRatio)
                     }
 
-                    // 最小サイズ制限
-                    if (newWidth < 15 || newHeight < 15) {
-                        newWidth = Math.max(newWidth, 15)
-                        newHeight = Math.max(newHeight, 15)
+                    // 最小サイズ制限（品質保持のため）
+                    if (newWidth < 100 || newHeight < 100) {
+                        newWidth = Math.max(newWidth, 100)
+                        newHeight = Math.max(newHeight, 100)
                     }
 
                     canvas.width = newWidth
@@ -165,15 +176,15 @@ export function useMachineCreate() {
                     }
                 }
                 
-                // 最終手段: 極小サイズで強制的に作成
-                canvas.width = 20
-                canvas.height = 20
+                // 最終手段: より大きなサイズで品質を保持
+                canvas.width = 150
+                canvas.height = 150
                 ctx.fillStyle = 'white'
-                ctx.fillRect(0, 0, 20, 20)
-                ctx.drawImage(imageBitmap, 0, 0, 20, 20)
+                ctx.fillRect(0, 0, 150, 150)
+                ctx.drawImage(imageBitmap, 0, 0, 150, 150)
                 
                 const finalBlob = await new Promise<Blob | null>((blobResolve) => {
-                    canvas.toBlob(blobResolve, 'image/jpeg', 0.1)
+                    canvas.toBlob(blobResolve, 'image/jpeg', 0.4)
                 })
                 
                 if (finalBlob) {
@@ -215,19 +226,19 @@ export function useMachineCreate() {
             for (const file of fileArray) {
                 console.log('Uploading file:', file.name)
                 
-                // ファイルをリサイズ（段階的に150KB以下まで）
+                // ファイルをリサイズ（段階的に1MB以下まで）
                 const resizedFile = await resizeImage(file)
                 console.log('File resized successfully:', resizedFile.name, `${Math.round(resizedFile.size / 1024)}KB`)
                 
                 // リサイズが失敗している場合（元ファイルと同じサイズ）は処理を停止
-                if (resizedFile.size === file.size && file.size > 150 * 1024) {
+                if (resizedFile.size === file.size && file.size > 1024 * 1024) {
                     console.error('Resize failed, file size unchanged:', Math.round(file.size / 1024) + 'KB')
                     alert(`画像のリサイズに失敗しました。ファイル: ${file.name} (${Math.round(file.size / 1024)}KB)`)
                     continue // 次のファイルに進む
                 }
                 
-                // 最終チェック: リサイズ後でも150KB以上の場合は警告
-                if (resizedFile.size > 150 * 1024) {
+                // 最終チェック: リサイズ後でも1MB以上の場合は警告
+                if (resizedFile.size > 1024 * 1024) {
                     console.warn('Resized file still large:', Math.round(resizedFile.size / 1024) + 'KB')
                 }
 
@@ -367,6 +378,8 @@ export function useMachineCreate() {
         uploading,
         processing,
         errors,
+        enableResize,
+        setEnableResize,
         handleImageChange,
         handleCategoryChange,
         handleSeriesChange,

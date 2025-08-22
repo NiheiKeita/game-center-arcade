@@ -14,6 +14,8 @@ export default function MachineCreate() {
     uploading,
     processing,
     errors,
+    enableResize,
+    setEnableResize,
     handleImageChange,
     handleCategoryChange,
     handleSeriesChange,
@@ -139,6 +141,21 @@ export default function MachineCreate() {
               <label className="block text-sm font-medium text-gray-700">
                 画像
               </label>
+              
+              <div className="mt-2 mb-3">
+                <label className="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={enableResize}
+                    onChange={(e) => setEnableResize(e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                  />
+                  <span className="ml-2 text-sm text-gray-600">
+                    画像を自動リサイズする（推奨）
+                  </span>
+                </label>
+              </div>
+              
               <input
                 type="file"
                 multiple
