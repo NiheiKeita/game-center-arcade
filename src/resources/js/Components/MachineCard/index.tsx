@@ -43,6 +43,14 @@ interface Props {
 export function MachineCard({ machine, showActions = true, className = '' }: Props) {
   const mainImage = machine.images && machine.images.length > 0 ? machine.images[0] : null
 
+  // デバッグ用ログ
+  console.log('MachineCard:', {
+    machineName: machine.name,
+    imagesCount: machine.images?.length || 0,
+    mainImage: mainImage,
+    imageUrl: mainImage?.full_image_url
+  })
+
   return (
     <div className={`overflow-hidden rounded-lg bg-white shadow-md ${className}`}>
       <div className="aspect-w-16 aspect-h-9">
@@ -51,6 +59,19 @@ export function MachineCard({ machine, showActions = true, className = '' }: Pro
             src={mainImage.full_image_url}
             alt={machine.name}
             className="h-48 w-full object-cover"
+            onError={(e) => {
+              console.error('Image load error:', {
+                src: mainImage.full_image_url,
+                machine: machine.name,
+                error: e
+              })
+            }}
+            onLoad={() => {
+              console.log('Image loaded successfully:', {
+                src: mainImage.full_image_url,
+                machine: machine.name
+              })
+            }}
           />
         ) : (
           <div className="flex h-48 w-full items-center justify-center bg-gray-200">

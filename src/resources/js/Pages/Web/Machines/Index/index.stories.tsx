@@ -204,9 +204,12 @@ export const MachineCardClick: Story = {
         // カードがクリック可能であることを確認
         const cardLink = machineCard.closest('a')
         await expect(cardLink).toBeInTheDocument()
-        await expect(cardLink).toHaveAttribute('href', '/machines/1')
-        
-        // ホバー効果のクラスが適用されていることを確認
-        await expect(cardLink.querySelector('.transition-transform')).toBeInTheDocument()
+        if (cardLink) {
+            await expect(cardLink).toHaveAttribute('href', '/machines/1')
+            
+            // ホバー効果のクラスが適用されていることを確認
+            const transitionElement = cardLink.querySelector('.transition-transform')
+            await expect(transitionElement).toBeInTheDocument()
+        }
     }
 }

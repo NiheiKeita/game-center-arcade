@@ -10,7 +10,8 @@ export default function MachineCreate() {
     setData,
     categories,
     series,
-    imagePreviews,
+    uploadedImages,
+    uploading,
     processing,
     errors,
     handleImageChange,
@@ -144,30 +145,33 @@ export default function MachineCreate() {
                 accept="image/*"
                 onChange={handleImageChange}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                disabled={uploading}
               />
-              {errors.images && (
-                <p className="mt-1 text-sm text-red-600">{errors.images}</p>
+              
+              {uploading && (
+                <p className="mt-2 text-sm text-blue-600">画像をアップロード中...</p>
               )}
               
-              {imagePreviews.length > 0 && (
+              {uploadedImages.length > 0 && (
                 <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3">
-                  {imagePreviews.map((preview, index) => (
-                    <div key={index} className="relative">
+                  {uploadedImages.map((uploadedImage, index) => (
+                    <div key={uploadedImage.id} className="relative">
                       <img
-                        src={preview}
-                        alt={`プレビュー ${index + 1}`}
+                        src={uploadedImage.url}
+                        alt={`アップロード済み ${index + 1}`}
                         className="h-32 w-full rounded-lg object-cover"
                       />
                       <button
                         type="button"
                         onClick={() => removeImage(index)}
                         className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
+                        disabled={uploading}
                       >
                         ×
                       </button>
                       <input
                         type="text"
-                        value={data.captions[index] || ''}
+                        value={uploadedImage.caption}
                         onChange={(e) => updateCaption(index, e.target.value)}
                         placeholder="キャプション（任意）"
                         className="mt-2 block w-full rounded border border-gray-300 px-2 py-1 text-sm"

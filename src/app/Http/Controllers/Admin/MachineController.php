@@ -65,10 +65,8 @@ class MachineController extends Controller
             'name' => 'required|string|max:255',
             'version' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'images' => 'nullable|array',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
-            'captions' => 'nullable|array',
-            'captions.*' => 'nullable|string|max:255',
+            'temp_image_ids' => 'nullable|array',
+            'temp_image_ids.*' => 'exists:temp_images,id',
         ]);
 
         $validated['created_by'] = Auth::guard('admin')->id();
@@ -76,27 +74,38 @@ class MachineController extends Controller
         $machine = Machine::create($validated);
 
         \Log::info('Machine created with ID: ' . $machine->id);
-        \Log::info('Request has images: ' . ($request->hasFile('images') ? 'YES' : 'NO'));
-        \Log::info('Request files: ' . json_encode($request->allFiles()));
-        \Log::info('Request data: ' . json_encode($request->except(['images'])));
 
-        if ($request->hasFile('images')) {
-            \Log::info('Found ' . count($request->file('images')) . ' images to upload');
+        // 一時画像を永続化
+        if ($request->has('temp_image_ids') && !empty($request->temp_image_ids)) {
+            \Log::info('Processing temp images: ' . json_encode($request->temp_image_ids));
 
-            foreach ($request->file('images') as $index => $image) {
-                $path = $image->store('images', 'public');
-                \Log::info('Image stored at path: ' . $path);
+            foreach ($request->temp_image_ids as $tempImageId) {
+                $tempImage = \App\Models\TempImage::find($tempImageId);
+                
+                if ($tempImage) {
+                    try {
+                        // ファイルを永続ディレクトリに移動
+                        $newPath = $tempImage->moveToPermanent('images');
 
-                $imageRecord = MachineImage::create([
-                    'machine_id' => $machine->id,
-                    'image_url' => $path,
-                    'caption' => $request->captions[$index] ?? null,
-                ]);
+                        // MachineImageレコード作成
+                        $imageRecord = MachineImage::create([
+                            'machine_id' => $machine->id,
+                            'image_url' => $newPath,
+                            'caption' => $tempImage->caption,
+                        ]);
 
-                \Log::info('MachineImage created with ID: ' . $imageRecord->id);
+                        \Log::info('MachineImage created with ID: ' . $imageRecord->id);
+
+                        // 一時画像レコードを削除
+                        $tempImage->delete();
+
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to process temp image: ' . $e->getMessage());
+                    }
+                }
             }
         } else {
-            \Log::info('No images found in request');
+            \Log::info('No temp images to process');
         }
 
         return redirect()->route('admin.machines.index')

@@ -15,7 +15,14 @@ interface Props {
 export function ImageGallery({ images, className = '' }: Props) {
   const [selectedImage, setSelectedImage] = useState<Image | null>(null)
 
+  // デバッグ用ログ
+  console.log('ImageGallery:', {
+    imagesCount: images?.length || 0,
+    images: images?.map(img => ({ id: img.id, url: img.full_image_url, caption: img.caption }))
+  })
+
   if (!images || images.length === 0) {
+    console.log('ImageGallery: No images to display')
     return (
       <div className={`rounded-lg bg-gray-100 p-8 text-center ${className}`}>
         <p className="text-gray-500">画像が登録されていません</p>
@@ -37,6 +44,19 @@ export function ImageGallery({ images, className = '' }: Props) {
                 src={image.full_image_url}
                 alt={image.caption || ''}
                 className="h-48 w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                onError={(e) => {
+                  console.error('ImageGallery image load error:', {
+                    id: image.id,
+                    src: image.full_image_url,
+                    error: e
+                  })
+                }}
+                onLoad={() => {
+                  console.log('ImageGallery image loaded successfully:', {
+                    id: image.id,
+                    src: image.full_image_url
+                  })
+                }}
               />
             </div>
             {image.caption && (

@@ -28,7 +28,12 @@ export const AdminLayout = React.memo<Props>(function AdminLayout({
                                 フロント画面
                             </Link>
                             <span className="text-gray-400">|</span>
-                            <Link href="/admin/logout" method="post" className="text-red-600 hover:text-red-800">
+                            <Link 
+                                href="/admin/logout" 
+                                method="post" 
+                                as="button"
+                                className="text-red-600 hover:text-red-800"
+                            >
                                 ログアウト
                             </Link>
                         </div>

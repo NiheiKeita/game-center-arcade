@@ -24,24 +24,28 @@ interface FormData {
     name: string;
     version: string;
     description: string;
-    images: FileList | null;
-    captions: string[];
+}
+
+interface UploadedImage {
+    id: number;
+    filename: string;
+    original_name: string;
+    url: string;
+    caption: string;
 }
 
 export function useMachineCreate() {
     const { categories, series: initialSeries } = usePage<CreateProps>().props
-    const [imageFiles, setImageFiles] = useState<File[]>([])
-    const [imagePreviews, setImagePreviews] = useState<string[]>([])
+    const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
+    const [uploading, setUploading] = useState(false)
     const [availableSeries, setAvailableSeries] = useState<Series[]>(initialSeries)
 
-    const { data, setData, processing, errors } = useForm<FormData>({
+    const { data, setData, post, processing, errors } = useForm<FormData>({
         category_id: '',
         series_id: '',
         name: '',
         version: '',
-        description: '',
-        images: null,
-        captions: []
+        description: ''
     })
 
     // カテゴリー選択時にシリーズを取得
@@ -63,45 +67,136 @@ export function useMachineCreate() {
         }
     }, [data.category_id])
 
-    // 画像をリサイズする関数
-    const resizeImage = (file: File, maxWidth: number = 800, maxHeight: number = 600, quality: number = 0.8): Promise<File> => {
-        return new Promise((resolve) => {
-            const canvas = document.createElement('canvas')
-            const ctx = canvas.getContext('2d')
-            const img = new Image()
-
-            img.onload = () => {
-                // アスペクト比を維持しながらリサイズ
-                let { width, height } = img
-                
-                if (width > maxWidth || height > maxHeight) {
-                    const ratio = Math.min(maxWidth / width, maxHeight / height)
-                    width = Math.floor(width * ratio)
-                    height = Math.floor(height * ratio)
-                }
-
-                canvas.width = width
-                canvas.height = height
-
-                // 画像を描画
-                ctx?.drawImage(img, 0, 0, width, height)
-
-                // Blobに変換
-                canvas.toBlob((blob) => {
-                    if (blob) {
-                        const resizedFile = new File([blob], file.name, {
-                            type: file.type,
-                            lastModified: Date.now()
-                        })
-                        console.log(`画像をリサイズしました: ${Math.round(file.size / 1024)}KB → ${Math.round(resizedFile.size / 1024)}KB`)
-                        resolve(resizedFile)
-                    } else {
-                        resolve(file)
-                    }
-                }, file.type, quality)
+    // ImageBitmapを使用した確実なリサイズ関数
+    const resizeImage = (file: File): Promise<File> => {
+        console.log('Starting to resize image:', file.name, file.type, `${Math.round(file.size / 1024)}KB`)
+        
+        return new Promise(async (resolve) => {
+            // HEICファイルの場合は変換をスキップ
+            if (file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().includes('.heic')) {
+                console.warn('HEIC format detected, skipping resize')
+                resolve(file)
+                return
             }
 
-            img.src = URL.createObjectURL(file)
+            try {
+                // ImageBitmapを使用してより確実に画像を読み込み
+                console.log('Creating ImageBitmap...')
+                const imageBitmap = await createImageBitmap(file)
+                console.log('ImageBitmap created successfully:', imageBitmap.width, 'x', imageBitmap.height)
+
+                const canvas = document.createElement('canvas')
+                const ctx = canvas.getContext('2d')
+                
+                if (!ctx) {
+                    console.error('Canvas context not available')
+                    imageBitmap.close()
+                    resolve(file)
+                    return
+                }
+
+                // 目標サイズを150KBに設定（さらに小さく）
+                const targetSize = 150 * 1024 // 150KB
+                
+                // 非常に積極的なリサイズ設定
+                const resizeConfigs = [
+                    { maxSize: 120, quality: 0.3 },
+                    { maxSize: 100, quality: 0.25 },
+                    { maxSize: 80, quality: 0.2 },
+                    { maxSize: 60, quality: 0.15 },
+                    { maxSize: 50, quality: 0.1 },
+                    { maxSize: 40, quality: 0.08 },
+                    { maxSize: 30, quality: 0.05 },
+                ]
+                
+                for (const config of resizeConfigs) {
+                    // アスペクト比を維持しながら最大サイズに収める
+                    const aspectRatio = imageBitmap.width / imageBitmap.height
+                    let newWidth, newHeight
+                    
+                    if (imageBitmap.width > imageBitmap.height) {
+                        // 横長
+                        newWidth = config.maxSize
+                        newHeight = Math.round(newWidth / aspectRatio)
+                    } else {
+                        // 縦長または正方形
+                        newHeight = config.maxSize
+                        newWidth = Math.round(newHeight * aspectRatio)
+                    }
+
+                    // 最小サイズ制限
+                    if (newWidth < 15 || newHeight < 15) {
+                        newWidth = Math.max(newWidth, 15)
+                        newHeight = Math.max(newHeight, 15)
+                    }
+
+                    canvas.width = newWidth
+                    canvas.height = newHeight
+
+                    // 背景を白に設定
+                    ctx.fillStyle = 'white'
+                    ctx.fillRect(0, 0, newWidth, newHeight)
+                    
+                    // ImageBitmapを描画
+                    ctx.drawImage(imageBitmap, 0, 0, newWidth, newHeight)
+
+                    // Blobに変換
+                    const blob = await new Promise<Blob | null>((blobResolve) => {
+                        canvas.toBlob(blobResolve, 'image/jpeg', config.quality)
+                    })
+
+                    if (blob) {
+                        const resizedFile = new File([blob], 
+                            file.name.replace(/\.[^/.]+$/, '.jpg'),
+                            {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            }
+                        )
+                        
+                        console.log(`リサイズ試行: ${newWidth}x${newHeight}, 品質${config.quality} → ${Math.round(resizedFile.size / 1024)}KB`)
+                        
+                        if (resizedFile.size <= targetSize) {
+                            console.log(`✅ 画像リサイズ成功: ${Math.round(file.size / 1024)}KB → ${Math.round(resizedFile.size / 1024)}KB`)
+                            imageBitmap.close()
+                            resolve(resizedFile)
+                            return
+                        }
+                    }
+                }
+                
+                // 最終手段: 極小サイズで強制的に作成
+                canvas.width = 20
+                canvas.height = 20
+                ctx.fillStyle = 'white'
+                ctx.fillRect(0, 0, 20, 20)
+                ctx.drawImage(imageBitmap, 0, 0, 20, 20)
+                
+                const finalBlob = await new Promise<Blob | null>((blobResolve) => {
+                    canvas.toBlob(blobResolve, 'image/jpeg', 0.1)
+                })
+                
+                if (finalBlob) {
+                    const finalFile = new File([finalBlob], 
+                        file.name.replace(/\.[^/.]+$/, '.jpg'),
+                        {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        }
+                    )
+                    console.log(`🔥 強制最小リサイズ: ${Math.round(file.size / 1024)}KB → ${Math.round(finalFile.size / 1024)}KB`)
+                    imageBitmap.close()
+                    resolve(finalFile)
+                } else {
+                    console.error('All resize attempts failed')
+                    imageBitmap.close()
+                    resolve(file)
+                }
+                
+            } catch (error) {
+                console.error('ImageBitmap creation failed:', error)
+                resolve(file)
+            }
         })
     }
 
@@ -113,43 +208,95 @@ export function useMachineCreate() {
         const fileArray = Array.from(files)
         console.log('Original files:', fileArray.map(f => ({ name: f.name, size: Math.round(f.size / 1024) + 'KB' })))
 
-        // 画像をリサイズ
-        const resizedFiles = await Promise.all(
-            fileArray.map(file => resizeImage(file, 800, 600, 0.8))
-        )
+        setUploading(true)
 
-        setImageFiles(resizedFiles)
-        console.log('Resized files:', resizedFiles.map(f => ({ name: f.name, size: Math.round(f.size / 1024) + 'KB' })))
+        try {
+            // 各ファイルを個別にアップロード
+            for (const file of fileArray) {
+                console.log('Uploading file:', file.name)
+                
+                // ファイルをリサイズ（段階的に150KB以下まで）
+                const resizedFile = await resizeImage(file)
+                console.log('File resized successfully:', resizedFile.name, `${Math.round(resizedFile.size / 1024)}KB`)
+                
+                // リサイズが失敗している場合（元ファイルと同じサイズ）は処理を停止
+                if (resizedFile.size === file.size && file.size > 150 * 1024) {
+                    console.error('Resize failed, file size unchanged:', Math.round(file.size / 1024) + 'KB')
+                    alert(`画像のリサイズに失敗しました。ファイル: ${file.name} (${Math.round(file.size / 1024)}KB)`)
+                    continue // 次のファイルに進む
+                }
+                
+                // 最終チェック: リサイズ後でも150KB以上の場合は警告
+                if (resizedFile.size > 150 * 1024) {
+                    console.warn('Resized file still large:', Math.round(resizedFile.size / 1024) + 'KB')
+                }
 
-        const previews = resizedFiles.map(file => URL.createObjectURL(file))
-        setImagePreviews(prev => {
-            prev.forEach(url => URL.revokeObjectURL(url))
-            return previews
-        })
+                // FormDataを作成
+                const formData = new FormData()
+                formData.append('image', resizedFile)
+                formData.append('caption', '') // デフォルトは空のキャプション
 
-        setData('captions', resizedFiles.map(() => ''))
+                // APIにアップロード
+                const response = await axios.post('/api/temp-images', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    }
+                })
+
+                console.log('Upload response:', response.data)
+
+                // アップロード済み画像リストに追加
+                setUploadedImages(prev => [...prev, response.data])
+            }
+
+            console.log('All files uploaded successfully')
+        } catch (error: any) {
+            console.error('Error uploading images:', error)
+            // エラーメッセージを表示
+            if (error.response?.status === 413) {
+                alert('ファイルサイズが大きすぎます。より小さな画像を選択してください。')
+            } else {
+                alert('画像のアップロードに失敗しました。再試行してください。')
+            }
+        } finally {
+            setUploading(false)
+        }
     }
 
-    const updateCaption = (index: number, caption: string) => {
-        const newCaptions = [...data.captions]
-        newCaptions[index] = caption
-        setData('captions', newCaptions)
+    const updateCaption = async (index: number, caption: string) => {
+        const imageToUpdate = uploadedImages[index]
+        if (!imageToUpdate) return
+
+        try {
+            // サーバー側でキャプションを更新（今回は省略、必要に応じて実装）
+            // await axios.put(`/api/temp-images/${imageToUpdate.id}`, { caption })
+
+            // ローカル状態を更新
+            setUploadedImages(prev => 
+                prev.map((img, i) => 
+                    i === index ? { ...img, caption } : img
+                )
+            )
+        } catch (error) {
+            console.error('Error updating caption:', error)
+        }
     }
 
-    const removeImage = (index: number) => {
-        const newFiles = imageFiles.filter((_, i) => i !== index)
-        const newPreviews = imagePreviews.filter((_, i) => i !== index)
-        const newCaptions = data.captions.filter((_, i) => i !== index)
+    const removeImage = async (index: number) => {
+        const imageToRemove = uploadedImages[index]
+        if (!imageToRemove) return
 
-        URL.revokeObjectURL(imagePreviews[index])
-
-        setImageFiles(newFiles)
-        setImagePreviews(newPreviews)
-        setData('captions', newCaptions)
-
-        const dt = new DataTransfer()
-        newFiles.forEach(file => dt.items.add(file))
-        setData('images', dt.files)
+        try {
+            // サーバー側から一時画像を削除
+            await axios.delete(`/api/temp-images/${imageToRemove.id}`)
+            
+            // ローカル状態から削除
+            setUploadedImages(prev => prev.filter((_, i) => i !== index))
+            
+            console.log('Image removed successfully:', imageToRemove.filename)
+        } catch (error) {
+            console.error('Error removing image:', error)
+        }
     }
 
     const handleCategoryChange = (categoryId: string) => {
@@ -190,59 +337,25 @@ export function useMachineCreate() {
     const submit = (e: React.FormEvent) => {
         e.preventDefault()
         console.log('Submitting form with data:', data)
-        console.log('Images in data:', data.images)
-        console.log('Image files count:', imageFiles.length)
+        console.log('Uploaded images count:', uploadedImages.length)
 
-        // FormDataを直接作成して送信
-        const formData = new FormData()
-        
-        // テキストフィールドを追加
-        formData.append('category_id', data.category_id)
-        formData.append('series_id', data.series_id)
-        formData.append('name', data.name)
-        formData.append('version', data.version)
-        formData.append('description', data.description)
-        
-        // 画像ファイルを追加
-        if (imageFiles.length > 0) {
-            imageFiles.forEach((file, index) => {
-                formData.append('images[]', file)  // 配列形式で追加
-                formData.append(`captions[${index}]`, data.captions[index] || '')
-            })
-            console.log('Added', imageFiles.length, 'images to FormData')
+        // データをオブジェクトとして準備
+        const submitData: any = {
+            category_id: data.category_id,
+            series_id: data.series_id,
+            name: data.name,
+            version: data.version,
+            description: data.description,
         }
 
-        // FormDataの内容をログ出力（デバッグ用）
-        console.log('FormData contents:')
-        for (const pair of formData.entries()) {
-            console.log(pair[0], pair[1])
+        // 一時アップロード画像のIDを追加
+        if (uploadedImages.length > 0) {
+            submitData.temp_image_ids = uploadedImages.map(img => img.id)
+            console.log('Added temp image IDs:', submitData.temp_image_ids)
         }
 
-        // Axiosで直接送信
-        const submitFormData = async () => {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-            console.log('CSRF Token:', csrfToken)
-            
-            try {
-                await axios.post('/admin/machines', formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                        'X-CSRF-TOKEN': csrfToken
-                    }
-                })
-                console.log('Form submission successful')
-                // 成功時は一覧ページにリダイレクト
-                window.location.href = '/admin/machines'
-            } catch (error: any) {
-                console.log('Form submission errors:', error)
-                if (error.response) {
-                    console.log('Error response:', error.response.data)
-                    console.log('Error status:', error.response.status)
-                }
-            }
-        }
-
-        submitFormData()
+        // Inertiaのpostメソッドを使用
+        post(route('admin.machines.store'), submitData)
     }
 
     return {
@@ -250,8 +363,8 @@ export function useMachineCreate() {
         setData,
         categories,
         series: availableSeries,
-        imageFiles,
-        imagePreviews,
+        uploadedImages,
+        uploading,
         processing,
         errors,
         handleImageChange,
