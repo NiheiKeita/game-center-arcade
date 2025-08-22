@@ -15,6 +15,9 @@ class MachineImage extends Model
 
     protected $appends = ['full_image_url'];
 
+    /**
+     * @return BelongsTo<Machine, $this>
+     */
     public function machine(): BelongsTo
     {
         return $this->belongsTo(Machine::class);

@@ -26,7 +26,7 @@ class MachineController extends Controller
 
         $machines = $query->paginate(12);
         $categories = Category::all();
-        
+
         // カテゴリーが選択されている場合は、そのカテゴリーのシリーズのみを取得
         if ($request->has('category_id') && $request->category_id) {
             $series = Series::where('category_id', $request->category_id)->get();

@@ -29,7 +29,7 @@ class MachineController extends Controller
 
         $machines = $query->get();
         $categories = Category::all();
-        
+
         // カテゴリーが選択されている場合は、そのカテゴリーのシリーズのみを取得
         if ($request->has('category_id') && $request->category_id) {
             $series = Series::where('category_id', $request->category_id)->get();
@@ -57,7 +57,7 @@ class MachineController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): \Illuminate\Http\RedirectResponse
     {
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
@@ -74,7 +74,7 @@ class MachineController extends Controller
         $validated['created_by'] = Auth::guard('admin')->id();
 
         $machine = Machine::create($validated);
-        
+
         \Log::info('Machine created with ID: ' . $machine->id);
         \Log::info('Request has images: ' . ($request->hasFile('images') ? 'YES' : 'NO'));
         \Log::info('Request files: ' . json_encode($request->allFiles()));
@@ -82,17 +82,17 @@ class MachineController extends Controller
 
         if ($request->hasFile('images')) {
             \Log::info('Found ' . count($request->file('images')) . ' images to upload');
-            
+
             foreach ($request->file('images') as $index => $image) {
                 $path = $image->store('images', 'public');
                 \Log::info('Image stored at path: ' . $path);
-                
+
                 $imageRecord = MachineImage::create([
                     'machine_id' => $machine->id,
                     'image_url' => $path,
                     'caption' => $request->captions[$index] ?? null,
                 ]);
-                
+
                 \Log::info('MachineImage created with ID: ' . $imageRecord->id);
             }
         } else {
@@ -125,7 +125,7 @@ class MachineController extends Controller
         ]);
     }
 
-    public function update(Request $request, Machine $machine)
+    public function update(Request $request, Machine $machine): \Illuminate\Http\RedirectResponse
     {
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
@@ -145,6 +145,7 @@ class MachineController extends Controller
 
         if ($request->has('remove_images')) {
             foreach ($request->remove_images as $imageId) {
+                /** @var MachineImage|null $image */
                 $image = MachineImage::find($imageId);
                 if ($image && $image->machine_id === $machine->id) {
                     Storage::disk('public')->delete($image->image_url);
@@ -156,7 +157,7 @@ class MachineController extends Controller
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $index => $image) {
                 $path = $image->store('images', 'public');
-                
+
                 MachineImage::create([
                     'machine_id' => $machine->id,
                     'image_url' => $path,
@@ -169,8 +170,9 @@ class MachineController extends Controller
             ->with('success', '筐体が更新されました。');
     }
 
-    public function destroy(Machine $machine)
+    public function destroy(Machine $machine): \Illuminate\Http\RedirectResponse
     {
+        /** @var \App\Models\MachineImage $image */
         foreach ($machine->images as $image) {
             Storage::disk('public')->delete($image->image_url);
         }

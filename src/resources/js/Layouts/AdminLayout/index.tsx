@@ -11,7 +11,7 @@ export const AdminLayout = React.memo<Props>(function AdminLayout({
 }) {
     return (
         <div className="flex min-h-screen flex-col bg-gray-100">
-            <nav className="bg-white shadow-sm border-b border-gray-200">
+            <nav className="border-b border-gray-200 bg-white shadow-sm">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 items-center justify-between">
                         <div className="flex items-center space-x-4">
@@ -36,7 +36,7 @@ export const AdminLayout = React.memo<Props>(function AdminLayout({
                 </div>
             </nav>
             
-            <div className="flex-1 flex flex-col items-center">
+            <div className="flex flex-1 flex-col items-center">
                 <div className="w-full max-w-7xl rounded-lg px-2 pt-6">
                     {children}
                 </div>

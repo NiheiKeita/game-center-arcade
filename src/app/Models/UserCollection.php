@@ -14,11 +14,17 @@ class UserCollection extends Model
         'comment',
     ];
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return BelongsTo<Machine, $this>
+     */
     public function machine(): BelongsTo
     {
         return $this->belongsTo(Machine::class);

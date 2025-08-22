@@ -40,19 +40,33 @@ UI 部品にはロジックを入れず、表示のみに専念
 このプロジェクトはDocker環境で動作します。以下のコマンドを使用してください：
 
 ## マイグレーション
-```
+```bash
 docker compose exec app php artisan migrate
 ```
 
 ## マイグレーション状況確認
-```
+```bash
 docker compose exec app php artisan migrate:status
 ```
 
-## コード品質チェック
+## 開発ワークフロー
+1. **コード修正**
+2. **品質チェック実行** (下記の「修正が終わったらやること」参照)
+3. **エラーがあれば自動修正コマンドで修正**
+4. **再度品質チェック実行**
+5. **全てパスしたらコミット・プッシュ**
+
+```bash
+# 推奨：一括チェックスクリプト
+# フロントエンド
+npm run lint && npm run type-check
+
+# バックエンド  
+docker compose exec app composer phpcs && \
+docker compose exec app vendor/bin/phpunit --debug && \
+docker compose exec app vendor/bin/phpstan analyze
 ```
-docker compose exec app composer phpcs .
-```
+
 
 # 実装履歴・注意事項
 
@@ -118,7 +132,34 @@ php artisan config:clear
 
 # 修正が終わったらやること
 以下を実行してエラーがないことを確認してください
-```
+
+## フロントエンド
+```bash
 npm run lint
 npm run type-check
+```
+
+## バックエンド
+```bash
+# PHPコードスタイルチェック
+docker compose exec app composer phpcs
+
+# PHPユニットテスト
+docker compose exec app vendor/bin/phpunit --debug
+
+# PHP静的解析
+docker compose exec app vendor/bin/phpstan analyze
+```
+
+**重要:** 全てのチェックでエラーがないことを確認してからコミット・プッシュしてください。
+
+## 自動修正コマンド
+エラーがある場合は以下で自動修正できます：
+
+```bash
+# PHPコードスタイル自動修正
+docker compose exec app composer phpcs-fix
+
+# ESLint自動修正
+npm run lint -- --fix
 ```

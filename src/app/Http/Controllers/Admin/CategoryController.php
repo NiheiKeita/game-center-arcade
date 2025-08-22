@@ -24,7 +24,7 @@ class CategoryController extends Controller
         return Inertia::render('Admin/Categories/Create');
     }
 
-    public function store(Request $request)
+    public function store(Request $request): \Illuminate\Http\RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -52,7 +52,7 @@ class CategoryController extends Controller
         ]);
     }
 
-    public function update(Request $request, Category $category)
+    public function update(Request $request, Category $category): \Illuminate\Http\RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -64,7 +64,7 @@ class CategoryController extends Controller
             ->with('success', 'カテゴリーが更新されました。');
     }
 
-    public function destroy(Category $category)
+    public function destroy(Category $category): \Illuminate\Http\RedirectResponse
     {
         $category->delete();
 

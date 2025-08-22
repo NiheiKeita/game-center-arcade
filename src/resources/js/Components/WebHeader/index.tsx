@@ -36,17 +36,17 @@ export const WebHeader = React.memo<Props>(function WebHeader({
                             <span className="text-xl font-bold text-gray-900">筐体データベース</span>
                         </Link>
                         <nav className="ml-10 hidden space-x-8 md:flex">
-                            <Link href="/" className="text-gray-600 hover:text-blue-600 font-medium">
+                            <Link href="/" className="font-medium text-gray-600 hover:text-blue-600">
                                 ホーム
                             </Link>
-                            <Link href="/machines" className="text-gray-600 hover:text-blue-600 font-medium">
+                            <Link href="/machines" className="font-medium text-gray-600 hover:text-blue-600">
                                 筐体一覧
                             </Link>
                         </nav>
                     </div>
                     
                     <div className="flex items-center space-x-4">
-                        <Link href="/admin/login" className="hidden sm:block text-gray-600 hover:text-blue-600 font-medium">
+                        <Link href="/admin/login" className="hidden font-medium text-gray-600 hover:text-blue-600 sm:block">
                             管理画面
                         </Link>
                         <Button variant='blue' onClick={() => router.visit(route("user.login"))}>

@@ -14,11 +14,17 @@ class Series extends Model
         'description',
     ];
 
+    /**
+     * @return BelongsTo<Category, $this>
+     */
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
+    /**
+     * @return HasMany<Machine, $this>
+     */
     public function machines(): HasMany
     {
         return $this->hasMany(Machine::class);

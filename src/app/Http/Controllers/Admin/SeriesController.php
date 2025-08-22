@@ -38,7 +38,7 @@ class SeriesController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): \Illuminate\Http\RedirectResponse
     {
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
@@ -71,7 +71,7 @@ class SeriesController extends Controller
         ]);
     }
 
-    public function update(Request $request, Series $series)
+    public function update(Request $request, Series $series): \Illuminate\Http\RedirectResponse
     {
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
@@ -85,7 +85,7 @@ class SeriesController extends Controller
             ->with('success', 'シリーズが更新されました。');
     }
 
-    public function destroy(Series $series)
+    public function destroy(Series $series): \Illuminate\Http\RedirectResponse
     {
         $series->delete();
 
