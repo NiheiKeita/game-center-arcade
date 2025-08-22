@@ -28,7 +28,7 @@ class MachineTest extends TestCase
     public function test_machine_can_be_created()
     {
         [$category, $series] = $this->createTestData();
-        
+
         $machine = Machine::create([
             'category_id' => $category->id,
             'series_id' => $series->id,
@@ -47,7 +47,7 @@ class MachineTest extends TestCase
     public function test_machine_belongs_to_category()
     {
         [$category, $series] = $this->createTestData();
-        
+
         $machine = Machine::create([
             'category_id' => $category->id,
             'series_id' => $series->id,
@@ -63,7 +63,7 @@ class MachineTest extends TestCase
     public function test_machine_belongs_to_series()
     {
         [$category, $series] = $this->createTestData();
-        
+
         $machine = Machine::create([
             'category_id' => $category->id,
             'series_id' => $series->id,
@@ -79,7 +79,7 @@ class MachineTest extends TestCase
     public function test_machine_has_many_images()
     {
         [$category, $series] = $this->createTestData();
-        
+
         $machine = Machine::create([
             'category_id' => $category->id,
             'series_id' => $series->id,
@@ -108,7 +108,7 @@ class MachineTest extends TestCase
     public function test_machine_has_many_user_collections()
     {
         [$category, $series] = $this->createTestData();
-        
+
         $machine = Machine::create([
             'category_id' => $category->id,
             'series_id' => $series->id,
@@ -130,7 +130,7 @@ class MachineTest extends TestCase
     public function test_machine_required_fields()
     {
         $this->expectException(\Illuminate\Database\QueryException::class);
-        
+
         Machine::create([
             'name' => 'Test Machine',
             'version' => '1.0',
@@ -141,10 +141,10 @@ class MachineTest extends TestCase
     public function test_machine_foreign_key_constraints()
     {
         $this->expectException(\Illuminate\Database\QueryException::class);
-        
+
         Machine::create([
             'category_id' => 999, // non-existent category
-            'series_id' => 999,   // non-existent series
+            'series_id' => 999, // non-existent series
             'name' => 'Test Machine',
             'version' => '1.0',
             'created_by' => 1,

@@ -15,7 +15,7 @@ class SeriesTest extends TestCase
     public function test_series_can_be_created()
     {
         $category = Category::create(['name' => 'Test Category']);
-        
+
         $series = Series::create([
             'category_id' => $category->id,
             'name' => 'Test Series',
@@ -31,7 +31,7 @@ class SeriesTest extends TestCase
     public function test_series_belongs_to_category()
     {
         $category = Category::create(['name' => 'Test Category']);
-        
+
         $series = Series::create([
             'category_id' => $category->id,
             'name' => 'Test Series',
@@ -44,7 +44,7 @@ class SeriesTest extends TestCase
     public function test_series_has_many_machines()
     {
         $category = Category::create(['name' => 'Test Category']);
-        
+
         $series = Series::create([
             'category_id' => $category->id,
             'name' => 'Test Series',
@@ -74,7 +74,7 @@ class SeriesTest extends TestCase
     public function test_series_required_fields()
     {
         $this->expectException(\Illuminate\Database\QueryException::class);
-        
+
         Series::create([
             'name' => 'Test Series',
             // category_id is missing
@@ -84,7 +84,7 @@ class SeriesTest extends TestCase
     public function test_series_category_id_must_exist()
     {
         $this->expectException(\Illuminate\Database\QueryException::class);
-        
+
         Series::create([
             'category_id' => 999, // non-existent category
             'name' => 'Test Series',

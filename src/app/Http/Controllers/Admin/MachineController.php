@@ -69,17 +69,27 @@ class MachineController extends Controller
             'temp_image_ids.*' => 'exists:temp_images,id',
         ]);
 
-        $validated['created_by'] = Auth::guard('admin')->id();
+        $adminId = Auth::guard('admin')->id();
+        if ($adminId !== null && is_array($validated)) {
+            $validated['created_by'] = $adminId;
+        }
 
-        $machine = Machine::create($validated);
+        if (!is_array($validated)) {
+            throw new \InvalidArgumentException('Validation data must be an array');
+        }
+
+        /** @var array<string, mixed> $validatedData */
+        $validatedData = $validated;
+        $machine = Machine::create($validatedData);
 
         \Log::info('Machine created with ID: ' . $machine->id);
 
         // 一時画像を永続化
-        if ($request->has('temp_image_ids') && !empty($request->temp_image_ids)) {
-            \Log::info('Processing temp images: ' . json_encode($request->temp_image_ids));
+        $tempImageIds = $request->input('temp_image_ids');
+        if (is_array($tempImageIds) && !empty($tempImageIds)) {
+            \Log::info('Processing temp images: ' . json_encode($tempImageIds));
 
-            foreach ($request->temp_image_ids as $tempImageId) {
+            foreach ($tempImageIds as $tempImageId) {
                 /** @var \App\Models\TempImage|null $tempImage */
                 $tempImage = \App\Models\TempImage::find($tempImageId);
 
@@ -150,27 +160,39 @@ class MachineController extends Controller
             'remove_images.*' => 'integer|exists:machine_images,id',
         ]);
 
-        $machine->update($validated);
+        if (!is_array($validated)) {
+            throw new \InvalidArgumentException('Validation data must be an array');
+        }
 
-        if ($request->has('remove_images')) {
-            foreach ($request->remove_images as $imageId) {
+        /** @var array<string, mixed> $validatedData */
+        $validatedData = $validated;
+        $machine->update($validatedData);
+
+        $removeImages = $request->input('remove_images');
+        if (is_array($removeImages)) {
+            foreach ($removeImages as $imageId) {
                 /** @var MachineImage|null $image */
                 $image = MachineImage::find($imageId);
                 if ($image && $image->machine_id === $machine->id) {
-                    Storage::disk('public')->delete($image->image_url);
+                    if ($image->image_url) {
+                        Storage::disk('public')->delete($image->image_url);
+                    }
                     $image->delete();
                 }
             }
         }
 
         if ($request->hasFile('images')) {
+            $captions = $request->input('captions');
+            $captionsArray = is_array($captions) ? $captions : [];
+
             foreach ($request->file('images') as $index => $image) {
                 $path = $image->store('images', 'public');
 
                 MachineImage::create([
                     'machine_id' => $machine->id,
                     'image_url' => $path,
-                    'caption' => $request->captions[$index] ?? null,
+                    'caption' => $captionsArray[$index] ?? null,
                 ]);
             }
         }
@@ -183,7 +205,9 @@ class MachineController extends Controller
     {
         /** @var \App\Models\MachineImage $image */
         foreach ($machine->images as $image) {
-            Storage::disk('public')->delete($image->image_url);
+            if ($image->image_url) {
+                Storage::disk('public')->delete($image->image_url);
+            }
         }
 
         $machine->delete();

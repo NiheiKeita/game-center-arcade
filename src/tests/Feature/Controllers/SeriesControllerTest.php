@@ -21,13 +21,13 @@ class SeriesControllerTest extends TestCase
     {
         $category1 = Category::create(['name' => 'Category 1']);
         $category2 = Category::create(['name' => 'Category 2']);
-        
-        $series1 = Series::create([
+
+        Series::create([
             'category_id' => $category1->id,
             'name' => 'Series 1',
         ]);
 
-        $series2 = Series::create([
+        Series::create([
             'category_id' => $category2->id,
             'name' => 'Series 2',
         ]);
@@ -35,34 +35,31 @@ class SeriesControllerTest extends TestCase
         // Test without filter
         $response = $this->get(route('admin.series.index'));
         $response->assertStatus(200);
-        $response->assertInertia(fn ($page) => 
+        $response->assertInertia(fn ($page) =>
             $page->component('Admin/Series/Index')
                 ->has('series', 2)
-                ->has('categories', 2)
-        );
+                ->has('categories', 2));
 
         // Test with category filter
         $response = $this->get(route('admin.series.index', ['category_id' => $category1->id]));
         $response->assertStatus(200);
-        $response->assertInertia(fn ($page) => 
+        $response->assertInertia(fn ($page) =>
             $page->component('Admin/Series/Index')
                 ->has('series', 1)
                 ->where('series.0.name', 'Series 1')
-                ->where('selectedCategoryId', $category1->id)
-        );
+                ->where('selectedCategoryId', $category1->id));
     }
 
     public function test_create_displays_create_form_with_categories()
     {
-        $category = $this->createTestCategory();
+        $this->createTestCategory();
 
         $response = $this->get(route('admin.series.create'));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn ($page) => 
+        $response->assertInertia(fn ($page) =>
             $page->component('Admin/Series/Create')
-                ->has('categories', 1)
-        );
+                ->has('categories', 1));
     }
 
     public function test_store_creates_new_series()
@@ -79,7 +76,7 @@ class SeriesControllerTest extends TestCase
 
         $response->assertRedirect(route('admin.series.index'));
         $response->assertSessionHas('success', 'シリーズが作成されました。');
-        
+
         $this->assertDatabaseHas('series', [
             'category_id' => $category->id,
             'name' => 'New Series',
@@ -107,14 +104,14 @@ class SeriesControllerTest extends TestCase
     public function test_show_displays_series_with_machines()
     {
         $category = $this->createTestCategory();
-        
+
         $series = Series::create([
             'category_id' => $category->id,
             'name' => 'Test Series',
             'description' => 'Test Description',
         ]);
 
-        $machine = Machine::create([
+        Machine::create([
             'category_id' => $category->id,
             'series_id' => $series->id,
             'name' => 'Test Machine',
@@ -125,18 +122,17 @@ class SeriesControllerTest extends TestCase
         $response = $this->get(route('admin.series.show', $series));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn ($page) => 
+        $response->assertInertia(fn ($page) =>
             $page->component('Admin/Series/Show')
                 ->where('series.name', 'Test Series')
                 ->where('series.description', 'Test Description')
-                ->has('series.machines', 1)
-        );
+                ->has('series.machines', 1));
     }
 
     public function test_edit_displays_edit_form()
     {
         $category = $this->createTestCategory();
-        
+
         $series = Series::create([
             'category_id' => $category->id,
             'name' => 'Test Series',
@@ -145,17 +141,16 @@ class SeriesControllerTest extends TestCase
         $response = $this->get(route('admin.series.edit', $series));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn ($page) => 
+        $response->assertInertia(fn ($page) =>
             $page->component('Admin/Series/Edit')
                 ->where('series.name', 'Test Series')
-                ->has('categories', 1)
-        );
+                ->has('categories', 1));
     }
 
     public function test_update_modifies_existing_series()
     {
         $category = $this->createTestCategory();
-        
+
         $series = Series::create([
             'category_id' => $category->id,
             'name' => 'Old Name',
@@ -171,7 +166,7 @@ class SeriesControllerTest extends TestCase
 
         $response->assertRedirect(route('admin.series.index'));
         $response->assertSessionHas('success', 'シリーズが更新されました。');
-        
+
         $this->assertDatabaseHas('series', [
             'id' => $series->id,
             'name' => 'Updated Name',
@@ -182,7 +177,7 @@ class SeriesControllerTest extends TestCase
     public function test_destroy_deletes_series()
     {
         $category = $this->createTestCategory();
-        
+
         $series = Series::create([
             'category_id' => $category->id,
             'name' => 'Test Series',
@@ -192,7 +187,7 @@ class SeriesControllerTest extends TestCase
 
         $response->assertRedirect(route('admin.series.index'));
         $response->assertSessionHas('success', 'シリーズが削除されました。');
-        
+
         $this->assertDatabaseMissing('series', [
             'id' => $series->id,
         ]);

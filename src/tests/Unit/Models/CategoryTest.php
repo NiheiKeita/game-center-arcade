@@ -28,8 +28,8 @@ class CategoryTest extends TestCase
     public function test_category_has_series_relationship()
     {
         $category = Category::create(['name' => 'Test Category']);
-        
-        $series = Series::create([
+
+        Series::create([
             'category_id' => $category->id,
             'name' => 'Test Series',
             'description' => 'Test Description',
@@ -43,13 +43,13 @@ class CategoryTest extends TestCase
     public function test_category_has_machines_relationship()
     {
         $category = Category::create(['name' => 'Test Category']);
-        
+
         $series = Series::create([
             'category_id' => $category->id,
             'name' => 'Test Series',
         ]);
 
-        $machine = Machine::create([
+        Machine::create([
             'category_id' => $category->id,
             'series_id' => $series->id,
             'name' => 'Test Machine',
@@ -65,16 +65,16 @@ class CategoryTest extends TestCase
     public function test_category_name_is_required()
     {
         $this->expectException(\Illuminate\Database\QueryException::class);
-        
+
         Category::create([]);
     }
 
     public function test_category_name_has_max_length()
     {
         $longName = str_repeat('a', 256);
-        
+
         $this->expectException(\Illuminate\Database\QueryException::class);
-        
+
         Category::create([
             'name' => $longName,
         ]);
