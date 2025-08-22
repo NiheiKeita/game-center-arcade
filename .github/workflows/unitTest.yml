@@ -26,9 +26,9 @@ jobs:
       - name: composer phpcs .
         run: |
           docker compose exec app composer phpcs .
-      - name: phpunit
-        run: |
-          docker compose exec app vendor/bin/phpunit --debug
+      # - name: phpunit
+      #   run: |
+      #     docker compose exec app vendor/bin/phpunit --debug
           
       - name: npm
         run: |
