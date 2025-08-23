@@ -9,7 +9,7 @@ initialize()
 // Inertia用のデコレーター
 const withInertia = (Story: any, context: any) => {
     // storyのparametersからinertiaの設定を取得
-    const inertiaProps = context.parameters?.inertia?.props || {}
+    const inertiaProps = context.parameters?.inertia || {}
     
     // InertiaプロパティをGlobalに設定（useEffectを使わずに即座に設定）
     setInertiaProps(inertiaProps)
