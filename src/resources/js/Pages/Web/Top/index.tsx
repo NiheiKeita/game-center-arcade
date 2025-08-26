@@ -1,11 +1,35 @@
 import { Head, Link } from '@inertiajs/react'
 import WebLayout from '@/Layouts/WebLayout'
 import { Button } from '@/Components/Button'
+import { UFOCatcher } from '@/Components/UFOCatcher'
+import { useUFOCatcher } from '@/hooks/useUFOCatcher'
+import { useCallback } from 'react'
 
 export default function Top() {
+    const { catchButton } = useUFOCatcher({
+        onButtonCatch: (buttonElement) => {
+            setTimeout(() => {
+                const link = buttonElement.closest('a')
+                if (link) {
+                    window.location.href = link.href
+                } else if (buttonElement.onclick) {
+                    buttonElement.click()
+                }
+            }, 1200)
+        }
+    })
+
+    const handleMouseDown = useCallback((e: React.MouseEvent) => {
+        if (e.button === 0) {
+            catchButton(e.clientX, e.clientY)
+        }
+    }, [catchButton])
+
     return (
-        <WebLayout>
-            <Head title="ゲームセンター筐体データベース" />
+        <div onMouseDown={handleMouseDown}>
+            <UFOCatcher />
+            <WebLayout>
+                <Head title="ゲームセンター筐体データベース" />
 
             <div className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
                 <div className="container mx-auto px-4 py-20 text-center">
@@ -129,6 +153,7 @@ export default function Top() {
                     </Link>
                 </div>
             </div>
-        </WebLayout>
+            </WebLayout>
+        </div>
     )
 }
