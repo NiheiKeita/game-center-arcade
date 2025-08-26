@@ -9,7 +9,7 @@ export const setInertiaProps = (props: any) => {
 
 export const usePage = () => ({
     component: '',
-    props: currentInertiaProps,
+    props: currentInertiaProps.props || {},
     url: '/',
     version: '1',
 })
