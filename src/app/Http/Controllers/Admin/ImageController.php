@@ -25,7 +25,11 @@ class ImageController extends Controller
             return response()->json(['error' => 'Unable to process the uploaded image.'], 422);
         }
 
-        $url = config('app.image_url') . Storage::url($path);
+        $imageUrl = config('app.image_url');
+        if (!is_string($imageUrl)) {
+            $imageUrl = '';
+        }
+        $url = $imageUrl . Storage::url($path);
         $image = Image::create([
             "url" => $url
         ]);

@@ -11,4 +11,7 @@ export default defineConfig({
         react(),
     ],
     publicDir: 'msw',
+    server: {
+        hmr: process.env.CI ? false : true,
+    },
 });
